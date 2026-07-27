@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Tracking System</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header-nav">
+    <div class="container nav-container">
+      <div class="logo-section">
+        <div class="logo-icon"><i class="fa-solid fa-folder-open"></i></div>
+        <div class="logo-text">
+          <h1>Document Tracking</h1>
+          <span>Front Office System</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <span id="dt-logged-in-user" style="font-weight:bold; margin-right: 15px;">Not logged in</span>
+        <button id="dt-login-btn" onclick="openDocTrackLogin()" class="btn-primary">
+          <i class="fa-solid fa-user-lock"></i> Login
+        </button>
+        <button id="dt-logout-btn" onclick="doDocTrackLogout()" class="btn-primary" style="display:none; background-color: #ef4444;">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="doctrack-view" style="display: none;">
+      
+      <div class="status-tabs" style="margin-bottom: 20px;">
+        <button class="status-tab active" data-dt-tab="collect" onclick="switchDtTab('collect')">
+          <i class="fa-solid fa-folder-plus"></i> 1. Collect
+        </button>
+        <button class="status-tab" data-dt-tab="process" onclick="switchDtTab('process')">
+          <i class="fa-solid fa-plane-departure"></i> 2. Send to Process
+        </button>
+        <button class="status-tab" data-dt-tab="receive" onclick="switchDtTab('receive')">
+          <i class="fa-solid fa-plane-arrival"></i> 3. Receive
+        </button>
+        <button class="status-tab" data-dt-tab="return" onclick="switchDtTab('return')">
+          <i class="fa-solid fa-folder-minus"></i> 4. Return
+        </button>
+        <button class="status-tab" data-dt-tab="reports" onclick="switchDtTab('reports')">
+          <i class="fa-solid fa-chart-line"></i> Reports
+        </button>
+      </div>
+      
+      <!-- COLLECT TAB -->
+      <div id="dt-tab-collect" class="dt-tab-content">
+        <form id="dt-form-collect" class="admin-form" onsubmit="submitDtProcess1(event)">
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Date & Time</label>
+              <input type="datetime-local" id="dt-p1-datetime" class="form-control" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Candidate Name (As per passport)</label>
+              <input type="text" id="dt-p1-name" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Passport Number</label>
+              <input type="text" id="dt-p1-passport" class="form-control" pattern="^[A-Z0-9]+$" title="Only capital letters and numbers" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Mobile Number</label>
+              <input type="text" id="dt-p1-mobile" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Email ID</label>
+              <input type="email" id="dt-p1-email" class="form-control" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Channel</label>
+              <div style="display:flex; gap:5px;">
+                <select id="dt-p1-channel" class="form-control" style="flex:1;" required onchange="handleDropdownAddOption(this, 'channel')">
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <textarea id="dt-p1-address" class="form-control" rows="2" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Documents to Collect</label>
+            <div id="dt-p1-documents-list" class="documents-box" style="margin-bottom:10px;"></div>
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom: 10px;">
+              <button type="button" class="btn-secondary btn-sm" onclick="addCustomDocumentOption()">+ Add Document Type</button>
+            </div>
+            <input type="text" id="dt-p1-experience-details" class="form-control" placeholder="Specify details if Experience Letter is selected (e.g., 2 companies)">
+          </div>
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Respective Recruiter</label>
+              <select id="dt-p1-recruiter" class="form-control" required></select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Project</label>
+              <select id="dt-p1-project" class="form-control" required></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Remarks</label>
+            <textarea id="dt-p1-remarks" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn-primary btn-large" id="dt-p1-submit">Submit Collection</button>
+        </form>
+      </div>
+
+      <!-- PROCESS TAB (SEND) -->
+      <div id="dt-tab-process" class="dt-tab-content" style="display:none;">
+        <form id="dt-form-process" class="admin-form" onsubmit="submitDtProcess2(event)">
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Select Project</label>
+              <select id="dt-p2-project-select" class="form-control" required onchange="handleProjectDropdownChange('p2')">
+                <option value="">-- Select Project --</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Select Candidate</label>
+              <select id="dt-p2-candidate-select" class="form-control" required onchange="handleCandidateDropdownChange('p2')">
+                <option value="">-- Select Project First --</option>
+              </select>
+            </div>
+          </div>
+          
+          <div id="dt-p2-selected-candidate" class="selected-candidate-card" style="display:none;"></div>
+          <input type="hidden" id="dt-p2-candidate-index">
+
+          <div class="form-group">
+            <label>Available Documents (Select to send)</label>
+            <div id="dt-p2-documents" class="documents-box">
+              <span class="text-muted">Search and select a candidate first</span>
+            </div>
+          </div>
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Process Type</label>
+              <select id="dt-p2-process" class="form-control" style="flex:1;" required onchange="handleDropdownAddOption(this, 'processType')"></select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Send Type</label>
+              <select id="dt-p2-sendtype" class="form-control" required onchange="handleDropdownAddOption(this, 'sendType')">
+              </select>
+            </div>
+          </div>
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Agency / Office Name</label>
+              <input type="text" id="dt-p2-agency" class="form-control" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Agency Address</label>
+              <textarea id="dt-p2-agency-address" class="form-control" rows="1" required></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Remarks</label>
+            <textarea id="dt-p2-remarks" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn-primary btn-large" id="dt-p2-submit">Send to Process</button>
+        </form>
+      </div>
+
+      <!-- RECEIVE TAB -->
+      <div id="dt-tab-receive" class="dt-tab-content" style="display:none;">
+        <form id="dt-form-receive" class="admin-form" onsubmit="submitDtProcess4(event)">
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Select Project</label>
+              <select id="dt-p4-project-select" class="form-control" required onchange="handleProjectDropdownChange('p4')">
+                <option value="">-- Select Project --</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Select Candidate</label>
+              <select id="dt-p4-candidate-select" class="form-control" required onchange="handleCandidateDropdownChange('p4')">
+                <option value="">-- Select Project First --</option>
+              </select>
+            </div>
+          </div>
+          
+          <div id="dt-p4-selected-candidate" class="selected-candidate-card" style="display:none;"></div>
+          <input type="hidden" id="dt-p4-candidate-index">
+
+          <div class="form-group">
+            <label>Documents Currently in Process (Select to receive back)</label>
+            <div id="dt-p4-documents" class="documents-box">
+              <span class="text-muted">Search and select a candidate first</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Remarks</label>
+            <textarea id="dt-p4-remarks" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn-primary btn-large" id="dt-p4-submit">Receive Documents</button>
+        </form>
+      </div>
+
+      <!-- RETURN TAB -->
+      <div id="dt-tab-return" class="dt-tab-content" style="display:none;">
+        <form id="dt-form-return" class="admin-form" onsubmit="submitDtProcess3(event)">
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Select Project</label>
+              <select id="dt-p3-project-select" class="form-control" required onchange="handleProjectDropdownChange('p3')">
+                <option value="">-- Select Project --</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Select Candidate</label>
+              <select id="dt-p3-candidate-select" class="form-control" required onchange="handleCandidateDropdownChange('p3')">
+                <option value="">-- Select Project First --</option>
+              </select>
+            </div>
+          </div>
+          
+          <div id="dt-p3-selected-candidate" class="selected-candidate-card" style="display:none;"></div>
+          <input type="hidden" id="dt-p3-candidate-index">
+
+          <div class="form-group">
+            <label>Available Documents (Select to return to candidate)</label>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:5px;">Note: Documents currently "In Process" cannot be returned until received back.</p>
+            <div id="dt-p3-documents" class="documents-box">
+              <span class="text-muted">Search and select a candidate first</span>
+            </div>
+          </div>
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label>Reason for Return</label>
+              <input type="text" id="dt-p3-reason" class="form-control" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>Return Type</label>
+              <select id="dt-p3-sendtype" class="form-control" required onchange="handleDropdownAddOption(this, 'returnType')">
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Remarks</label>
+            <textarea id="dt-p3-remarks" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn-primary btn-large" id="dt-p3-submit">Return Documents</button>
+        </form>
+      </div>
+      
+      <!-- REPORTS TAB -->
+      <div id="dt-tab-reports" class="dt-tab-content" style="display:none;">
+        <div class="form-row" style="display:flex; gap:10px; margin-bottom: 10px; flex-wrap: wrap;">
+          <div class="form-group" style="flex:1; min-width: 200px;">
+            <label>Category Filter</label>
+            <select id="dt-rep-category" class="form-control" onchange="renderReports()">
+              <option value="All">All Operations</option>
+              <option value="Collection">Collection</option>
+              <option value="Processing">Sent to Process</option>
+              <option value="Received">Received from Process</option>
+              <option value="Return">Return to Candidate</option>
+              <option value="Missing">Missing Documents</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1; min-width: 200px;">
+            <label>Project Filter</label>
+            <select id="dt-rep-project" class="form-control" onchange="renderReports()">
+              <option value="All">All Projects</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1; min-width: 200px;">
+            <label>Candidate Filter</label>
+            <select id="dt-rep-candidate" class="form-control" onchange="renderReports()">
+              <option value="All">All Candidates</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="display:flex; gap:10px; margin-bottom: 20px;">
+          <div class="form-group" style="flex:1;">
+            <label>From Date</label>
+            <input type="date" id="dt-rep-date-from" class="form-control" onchange="renderReports()">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>To Date</label>
+            <input type="date" id="dt-rep-date-to" class="form-control" onchange="renderReports()">
+          </div>
+        </div>
+
+        <!-- Missing Alert Banner Removed -->
+
+        <div style="overflow-x:auto;">
+          <table class="report-table" id="dt-rep-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Operation</th>
+                <th>Candidate</th>
+                <th>File Number</th>
+                <th>Passport</th>
+                <th>Project</th>
+                <th>Documents</th>
+                <th>Handled By</th>
+                <th>Remarks</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="dt-rep-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+    </section>
+  </main>
+
+  <!-- REPORT DETAILS MODAL -->
+  <div id="dt-report-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 style="color:var(--text-main); margin:0;"><i class="fa-solid fa-circle-info"></i> Transaction Details</h3>
+        <button type="button" onclick="document.getElementById('dt-report-modal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-body" id="dt-report-modal-body" style="font-size:0.95rem;">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div id="dt-login-modal" class="modal-overlay" style="display:flex;">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 style="color:var(--text-main); margin:0;"><i class="fa-solid fa-user-lock"></i> Login</h3>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:15px; font-size:0.9rem; color:var(--text-muted);">Please select your name and enter PIN.</p>
+        <form id="dt-login-form" onsubmit="doDocTrackLogin(event)">
+          <div class="form-group">
+            <label>Name</label>
+            <select id="dt-login-name" class="form-control" required>
+              <option value="">Select User</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>PIN</label>
+            <input type="password" id="dt-login-pin" class="form-control" required>
+          </div>
+          <div id="dt-login-error" style="color:red; margin-bottom:15px; display:none; font-size:0.85rem;">Invalid name or PIN.</div>
+          <button type="submit" class="btn-primary" style="width:100%;" id="dt-login-submit">Login</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYNC LOADING OVERLAY -->
+  <div id="sync-overlay" style="display:none; position:fixed; bottom:20px; right:20px; background:white; padding:15px 25px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:9999; align-items:center; gap:15px; border-left:4px solid var(--primary-color);">
+    <i class="fa-solid fa-arrows-rotate fa-spin" style="font-size:1.5rem; color:var(--primary-color);"></i>
+    <div>
+      <h4 style="margin:0; font-size:1rem; color:var(--text-main);">Syncing with Database</h4>
+      <p id="sync-message" style="margin:5px 0 0 0; font-size:0.85rem; color:var(--text-muted);">Please wait...</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
